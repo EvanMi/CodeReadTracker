@@ -1,0 +1,45 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.yumi.CodeReadTracker</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>CodeReadTracker</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="evanmi1991@gmail.com" url="https://github.com/EvanMi/CodeReadTracker">EvanMi</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description><![CDATA[
+    Track the code reading path through a directed graph and jump to the corresponding code location by clicking on the directed graph node.<br>
+    <ul>
+    <li>Click "startTrace" button to start track.</li>
+    <li>Read code and jump into any method or class (AKA "Go to Declaration or Usages", Window use CTRL+Mouse Left Button Click, MAC use COMMAND+Mouse Left Button Click), These jump records will be recorded.</li>
+    <li>Click "stopTrace" button to stop track.</li>
+    <li>Click "reset" button to clear track info.</li>
+    <li>Click on the node in the directed graph to jump to the source code location.</li>
+    </ul>
+  ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="CodeReadTracer"
+                    secondary="true"
+                    anchor="right" factoryClass="com.yumi.codereadtracker.window.TrackerWindowFactory" icon="/META-INF/pluginIcon.svg">
+        </toolWindow>
+    </extensions>
+    <applicationListeners>
+        <listener class="com.yumi.codereadtracker.listener.ProjectCloseListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+        <listener class="com.yumi.codereadtracker.listener.GoToDeclarationOrUsagesActionListener"
+                  topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+    </applicationListeners>
+</idea-plugin>
