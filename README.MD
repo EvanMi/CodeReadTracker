@@ -1,3 +1,5 @@
+## Who am i
+Idea Plugin https://plugins.jetbrains.com/plugin/24952-codereadtracker
 ## Introduce
 This is an Idea plugin project. Track the code reading path through a directed graph and jump to the corresponding code location by clicking on the directed graph node.
 ## Usage
