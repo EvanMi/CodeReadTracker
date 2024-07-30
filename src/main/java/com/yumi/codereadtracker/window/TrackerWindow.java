@@ -40,6 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.intellij.openapi.editor.ScrollType.MAKE_VISIBLE;
+
 public class TrackerWindow {
     private static final String NOT_IN_TRACING = "Not In Tracing ...";
     private static final String IN_TRACING = "In tracing ...";
@@ -52,7 +54,7 @@ public class TrackerWindow {
     private JButton close;
     private JPanel imagePanel;
     private JLabel myLabel;
-    private TrackerJPanel trackerJPanel;
+    private TrackerGraphComponent trackerGraphComponent;
     private final Project project;
     private volatile boolean isTrackEnabled = false;
     private String lastAddedVertex = null;
@@ -83,13 +85,14 @@ public class TrackerWindow {
         reset.addActionListener(e -> {
             lock.lock();
             try {
-                trackerJPanel.getMxGraph().removeCells(trackedLine2VertexMap.values().toArray(), true);
-                trackerJPanel.getMxGraph().refresh();
+                trackerGraphComponent.getMxGraph().removeCells(trackedLine2VertexMap.values().toArray(), true);
+                trackerGraphComponent.getMxGraph().refresh();
                 trackedLine2VertexMap.clear();
                 trackedLine2FileMap.clear();
                 index = 1;
                 lastAddedVertex = null;
                 y = 0;
+                this.trackerGraphComponent.setVisible(false);
             } catch (Exception ex) {
                 throw ex;
             }  finally {
@@ -98,9 +101,11 @@ public class TrackerWindow {
         });
         close.addActionListener(e -> toolWindow.hide());
         myLabel.setText(NOT_IN_TRACING);
-        mxGraph graph = trackerJPanel.getMxGraph();
+        mxGraph graph = trackerGraphComponent.getMxGraph();
         // 创建图形组件并添加到 JFrame
-        mxGraphComponent graphComponent = trackerJPanel.getMxGraphComponent();
+        mxGraphComponent graphComponent = trackerGraphComponent;
+        graphComponent.setVisible(false);
+
 
         graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
             @Override
@@ -124,7 +129,7 @@ public class TrackerWindow {
                             CaretModel caretModel = editor.getCaretModel();
                             LogicalPosition logicalPosition = new LogicalPosition(logicalLine, logicalColumn);
                             caretModel.moveToLogicalPosition(logicalPosition);
-
+                            editor.getScrollingModel().scrollToCaret(MAKE_VISIBLE);
                         });
                     }
                 }
@@ -139,7 +144,7 @@ public class TrackerWindow {
             return;
         }
         lock.lock();
-        mxGraph graph = trackerJPanel.getMxGraph();
+        mxGraph graph = trackerGraphComponent.getMxGraph();
         Object parent = graph.getDefaultParent();
         try {
             trackedLine2FileMap.put(codeAndLineNumber, virtualFile);
@@ -169,6 +174,9 @@ public class TrackerWindow {
             mxIGraphLayout layout = new mxHierarchicalLayout(graph);
             layout.execute(graph.getDefaultParent());
             lastAddedVertex = codeAndLineNumber;
+            if (!this.trackerGraphComponent.isVisible()) {
+                this.trackerGraphComponent.setVisible(true);
+            }
         } catch (Exception ex) {
             throw ex;
         } finally {
@@ -187,6 +195,29 @@ public class TrackerWindow {
     }
 
     private void createUIComponents(){
-        this.trackerJPanel = new TrackerJPanel();
+        mxGraph mxGraph = new TrackerGraph(this);
+        TrackerGraphComponent component= new TrackerGraphComponent(mxGraph);
+        mxGraph.setCellsEditable(false); // 禁止编辑单元格内容
+        //mxGraph.setCellsMovable(false);  // 禁止移动单元格
+        mxGraph.setCellsResizable(false); // 禁止改变单元格大小
+        component.setConnectable(false); // 禁止连接操作
+        this.trackerGraphComponent = component;
+    }
+
+    public static class TrackerGraph extends mxGraph {
+        private final TrackerWindow trackerWindow;
+        public TrackerGraph(TrackerWindow trackerWindow) {
+            this.trackerWindow = trackerWindow;
+        }
+
+        @Override
+        public String getToolTipForCell(Object cell) {
+            String value = convertValueToString(cell);
+            VirtualFile virtualFile = trackerWindow.trackedLine2FileMap.get(value);
+            if (null != virtualFile) {
+                return virtualFile.getCanonicalPath();
+            }
+            return value;
+        }
     }
 }
