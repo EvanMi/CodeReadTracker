@@ -29,7 +29,9 @@ public class GoToDeclarationOrUsagesActionListener implements AnActionListener {
 
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-        if ("Go to Declaration or Usages".equals(action.getTemplatePresentation().getText())) {
+        String text = action.getTemplatePresentation().getText();
+        if ("Go to Declaration or Usages".equals(text) || "Go to implementation(s)".equals(text)
+                || "Go to super method".equals(text)) {
             VirtualFile virtualFile = event.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
             Editor editor = event.getRequiredData(CommonDataKeys.EDITOR);
             int line = editor.getCaretModel().getLogicalPosition().line + 1;
@@ -37,6 +39,5 @@ public class GoToDeclarationOrUsagesActionListener implements AnActionListener {
            ApplicationManager.getApplication().getService(TrackerWindowManageService.class).get(editor.getProject().getName())
                    .ifPresent(myWindow -> myWindow.trackAndAddVertex(res, virtualFile));
         }
-
     }
 }
